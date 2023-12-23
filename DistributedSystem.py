@@ -189,7 +189,7 @@ max_gdp_per_country = dummy_df.groupby('Author')['ItemCount'].sum()
 max_gdp_per_country.compute()
 len(dummy_df)
 
-import tr
+import re
 def extract_year(year_text, *args, **kwargs):
 	if type(year_text)==type(''):
 		return re.findall("[-+]?[\d]+(?:,\d\d\d)*[\.]?\d*(?:[eE[-+]?\d+)?", year_text)

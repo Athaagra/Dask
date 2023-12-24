@@ -189,7 +189,7 @@ max_gdp_per_country = dummy_df.groupby('Author')['ItemCount'].sum()
 max_gdp_per_country.compute()
 len(dummy_df)
 
-import re
+import tr
 def extract_year(year_text, *args, **kwargs):
 	if type(year_text)==type(''):
 		return re.findall("[-+]?[\d]+(?:,\d\d\d)*[\.]?\d*(?:[eE[-+]?\d+)?", year_text)
@@ -202,3 +202,143 @@ separate_republication_year = dummy_df['PublicationYear'].apply(extract_year,
 seperate_publication_year.compute()
 dummy_df.nlargest(5, 'ItemCount').compute()
 
+from dask.distributed import Client
+import dask.dataframe as df 
+
+client = Client(processes=False, thread_per_worker=2,
+					n_workers=3, memory_limit='4GB')
+client
+
+import dask.dataframe as df 
+dummy_df = df.read_csv('/multiple_csvs/*.csv')
+dummy_df 
+dummy_df.describe().visualize(filename='describe.png')
+dummy_df.head()
+dummy_df = dummy_df.drop('Unnamed: 0', axis=1)
+dummy_df.head() 
+max_gdp_per_country = dummy_df.groupby('country')['gdp'].max()
+max_gdp_per_country.compute()
+without_japan = dummy_df[dummy_df.country != 'Japan']
+without_japan.visualize()
+persisted_df = without_japan.persist()
+persisted_gdp = persisted_df.groupby('country')['gdp'].max()
+persisted_df.visualize()
+persisted_df = without_japan.persist()
+
+
+
+from dask.distributed import Client 
+import dask.dataframe as df
+
+client = Client(processes=False, threads_per_worker=2,
+				n_workers=3, memory_limit='4GB')
+
+import time
+
+def some_func(x):
+	time.sleep(1)
+	y = x + 1
+	time.sleep(1)
+	z = x * y
+	time.sleep(1)
+	return z
+
+result_1 = client.submit(some_func, 5)
+result_l
+
+def some_func_long(x):
+	time.sleep(10)
+	y = x + 1
+	time.sleep(5)
+	z = x * y 
+	time.sleep(2)
+	return z
+
+result_2 = client.submit(some_func_long, 5)
+result_2 
+
+/*** result() function can be used to force the computation to complete ***/
+result_1.result()
+result_3 = client.submit(some_func_long, 15)
+result_3.result()
+
+/*** We can evaluate multiple Future objects in one go using gather ***/
+
+futures_list = [client.submit(some_func, x) for x in range(1, 5)]
+all_res = client.gather(futures_list)
+all_res
+
+/***  use map function to pass multiple future object ***/
+
+list_result = client.map(some_func_long, range(5))
+client.gather(list_result)
+
+from sklearn.datasets import make_regression 
+from sklearn.linear_model import LinearRegression, Ridge 
+
+X, y = make_regression(n_sample=10000,
+						random_state=0,
+						n_features=10,
+						n_informative=6,
+						)
+print(len(X[0])
+print(X)
+clf = LinearRegression()
+clf.fit(X,y)
+clf2=Ridge()
+clf2.fit(X,y)
+
+from sklearn.externals import joblib 
+
+with joblib.parallel_backend('dask'):
+	clf.fit(X,y)
+
+clf.predict(X)[:5]
+
+from dask_ml.cluster import KMeans
+import dask_ml.datasets 
+
+X,y = dask_ml.datasets.make_blobs(n_samples=500000,
+								  chunks=50000,
+								  random_state=0
+								  centers=5)
+
+clf = KMeans(n_clusters=5, init_max_iter=10)
+clf.fit(X)
+my_pred=clf.predict(X[:10])
+my_pred.compute()
+
+from sklearn.svm import SVC 
+from sklearn.datasets import make_classification
+from sklearn.model_selection import GridSearchCV 
+
+X,y = make_classification(n_samples=500,
+						  random_state=0,
+						  n_classes=3,
+						  n_features=5,
+						  n_informative=3,
+						  n_redundant=2)
+len(X[0])
+
+param_grid= {
+	"C": [0.00001, 0.0001, 0.001, 0.01, 0.1, 1],
+	"kernel": ['rbf', 'poly', 'sigmoid'],
+	"degree": [1, 2, 3, 4],
+	"coef0": [1, 0.5, 0.3, 0.2, 0.1],
+	"gamma": ["auto", "scale"]
+			}
+
+clf = SVC(random_state=0, probability=True)
+
+grid_search = GridSearchCV(clf,
+							param_grid=param_grid,
+							cv=3,
+							n_jobs=-1)
+%time grid_search.fit(X,y)
+
+from sklearn.externals import joblib 
+
+with joblib.parallel_backend('dask'):
+	%time _ = grid_search.fit(X,y)
+
+grid_search.predict(X)[:10]
